@@ -43,11 +43,19 @@ public class KerbinClockBehavior : MonoBehaviour
 	private static Core _core;
 	private static bool _draw = true;
 	
-	public void Awake()
+	public void Awake ()
 	{
-		DontDestroyOnLoad(this);
-	}
+		DontDestroyOnLoad (this);
+		CancelInvoke();
+		InvokeRepeating ("ClockUpdate",0.2F,0.2F);
 
+	}
+	public void ClockUpdate ()
+	{
+		if (IsEnabled && _draw) {
+			_core.ClockUpdate ();
+		}
+	}
 	public void OnGUI()
 	{
 		if (IsEnabled && _draw)
@@ -56,7 +64,7 @@ public class KerbinClockBehavior : MonoBehaviour
 	
 	public void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.F12))
+		if (Input.GetKeyDown(KeyCode.F11))
 			_draw = !_draw;
 	}
 	
@@ -67,6 +75,7 @@ public class KerbinClockBehavior : MonoBehaviour
 		if (_core == null)
 			_core = new Core();
 		_core.OnFixedUpdate();
+
 	}
 	
 	private static bool IsEnabled
@@ -79,46 +88,86 @@ namespace KerbinClock
 {
 	public class Core : Window
 	{
-		private readonly Panel[] _editors;
-		private bool _minimized = true;
-		private Label test = new Label("");
-		
+		//private readonly Panel[] _editors;
+		//private bool _minimized = true;
+		private Label UT = new Label(""); 
+		private Label KT = new Label("");
+		private Label ET = new Label("");
+
+
 		public Core()
 			: base("KerbinClock (F11)")
 		{
-			WindowRect = new Rect(50, 50, 100, 100);
+			WindowRect = new Rect(120, 1, 320, 100);
 			//_editors = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes())
 			//	.Where(t => t.BaseType == typeof(Panel)).Select(t => (Panel)Activator.CreateInstance(t))
 			//		.ToArray();
 			//foreach (var editor in _editors)
 			//	editor.IsRendered = false;
-			FlipMinimized();
+			Contents = new List<IWindowContent> { UT, KT, ET };
+			// FlipMinimized();
 		}
-		
+		/*
 		private void FlipMinimized()
 		{
 			_minimized = !_minimized;
 			if (_minimized)
-			Contents = new List<IWindowContent> { new Button("Restore", FlipMinimized) };
+				Contents = new List<IWindowContent> { new Button("Restore", FlipMinimized) };
 			else
-				Contents = new List<IWindowContent>(new IWindowContent[] { test, new Button("Minimize", FlipMinimized) }
-				.Concat(_editors.Select(e => (IWindowContent)new Toggle(e.Title, a => e.IsRendered = !e.IsRendered) { Value = e.IsRendered })));
-		}
+
+		}*/
 		
 		protected override GUILayoutOption[] WindowOptions
 		{
 			get
 			{ // ExpandWidth?
-				return _minimized ? new[] { GUILayout.Width(80), GUILayout.Height(50) } : new[] { GUILayout.Width(180), GUILayout.ExpandHeight(true) };
+				return new [] {GUILayout.Width(180), GUILayout.Height(60)};
+				//return _minimized ? new[] { GUILayout.Width(80), GUILayout.Height(50) } : new[] { GUILayout.Width(180), GUILayout.ExpandHeight(true) };
 			}
 		}
+		public void ClockUpdate ()
+		{	
+			//Debug.Log ("ClockUpdate");
+			double dUT = Planetarium.GetUniversalTime ();
+			//int iUT = Convert.ToInt32 (Math.Floor (dUT));
 		
+			double dHours = dUT / 60.0 / 60.0;
+
+			double dKYears = Math.Floor (dHours / 2556.5402) + 1;
+			double dKDays = Math.Floor ( dHours / 6.0) % 2556.5402;
+			double dKHours = Math.Floor ( dHours % 6.0);
+
+			double dEYears = Math.Floor (dHours / 8766.1527121) + 1;
+			double dEDays = Math.Floor (dHours / 24.0) % 8766.1527121;
+			double dEHours = Math.Floor (dHours % 24.0);
+
+			//int iKYears = Convert.ToInt32 (Math.Floor (dHours / 2556.5402)) + 1;
+			//int iKDays = Convert.ToInt32 (Math.Floor (dHours / 6.0) % 2556.5402);
+			//int iKHours = Convert.ToInt32 (Math.Floor (dHours % 6.0));
+		
+			//int iEYears = Convert.ToInt32 (Math.Floor (dHours / 8766.1527121)) + 1;
+			//int iEDays = Convert.ToInt32 (Math.Floor (dHours / 24.0) % 8766.1527121);
+			//int iEHours = Convert.ToInt32 (Math.Floor (dHours % 24.0));
+		
+			double dMinutes = Math.Floor ((dUT / 60.0) % 60.0);
+			double dSeconds = Math.Floor (dUT % 60.0);
+		
+		
+			UT.Text = "UT: " + Math.Floor (dUT).ToString ("0,0");
+			KT.Text = "KT: Year " + dKYears.ToString ("0") + ", Day " + dKDays.ToString ("0") + ", " + 
+				dKHours.ToString ("00") + ":" + dMinutes.ToString ("00") + ":" + dSeconds.ToString ("00");
+			ET.Text = "ET: Year " + dEYears.ToString ("0") + ", Day " + dEDays.ToString ("0") + ", " + 
+				dEHours.ToString ("00") + ":" + dMinutes.ToString ("00") + ":" + dSeconds.ToString ("00");
+
+		}
 		public void OnFixedUpdate ()
-		{
+		{ 
+
+			/*
 			foreach (var window in _editors) {
 				test.Text = "F12 to hide/show - UTC: " + Planetarium.GetUniversalTime ().ToString ();
 				window.Update ();
-			}
+			}*/
 		}
 		/*
 		public static Orbit CreateOrbit(double inc, double e, double sma, double lan, double w, double mEp, double epoch, CelestialBody body)
