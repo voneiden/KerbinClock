@@ -94,7 +94,7 @@ namespace KerbinClock
 			get { return new[] { GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true) }; }
 		}
 	}
-	
+	/*
 	public class Selector<T> : Window
 	{
 		public Selector(string title, IEnumerable<T> elements, Func<T, string> nameSelector, Action<T> onSelect)
@@ -114,7 +114,7 @@ namespace KerbinClock
 			};
 		}
 	}
-	
+	*/
 	public class PopupWindow : Window
 	{
 		public PopupWindow(string message, string title, int width, int height)
@@ -154,7 +154,40 @@ namespace KerbinClock
 			GUILayout.Label(Text);
 		}
 	}
-	
+
+	public class TextArea : IWindowContent
+	{
+		public string Text { get; set; }
+
+		public TextArea(string text)
+		{
+			Text = text;
+		}
+		
+		public void Draw()
+		{
+			GUILayout.TextArea(Text);
+		}
+	}
+
+	public class Button : IWindowContent
+	{
+		public string Text { get; set; }
+		public Action OnClick { get; set; }
+		
+		public Button(string text, Action onClick)
+		{
+			Text = text;
+			OnClick = onClick;
+		}
+		
+		public void Draw()
+		{
+			if (GUILayout.Button(Text))
+				OnClick();
+		}
+	}
+	/*
 	public class TextBox : IWindowContent, IValueHolder<string>
 	{
 		public string Name { get; set; }
@@ -186,23 +219,7 @@ namespace KerbinClock
 		}
 	}
 	
-	public class Button : IWindowContent
-	{
-		public string Text { get; set; }
-		public Action OnClick { get; set; }
-		
-		public Button(string text, Action onClick)
-		{
-			Text = text;
-			OnClick = onClick;
-		}
-		
-		public void Draw()
-		{
-			if (GUILayout.Button(Text))
-				OnClick();
-		}
-	}
+
 	
 	public class Toggle : IWindowContent, IValueHolder<bool>
 	{
@@ -286,6 +303,6 @@ namespace KerbinClock
 		{
 			DrawFunc();
 		}
-	}
+	}*/
 	
 }

@@ -91,21 +91,25 @@ namespace KerbinClock
 		//private readonly Panel[] _editors;
 		//private bool _minimized = true;
 		private Label UT = new Label(""); 
-		private Label KT = new Label("");
+		//private Label KT = new Label("");
 		private Label ET = new Label("");
+		private TextArea TextEvents = new TextArea("");
+		private CelestialEvents CEvents = new CelestialEvents();
+		private List<CelestialEvents.CelestialEvent> CEventList = new List<CelestialEvents.CelestialEvent>();
 
-
+		private bool expanded = false;
 		public Core()
 			: base("KerbinClock (F11)")
 		{
-			WindowRect = new Rect(120, 1, 320, 100);
+			WindowRect = new Rect(130, 1, 320, 100);
 			//_editors = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes())
 			//	.Where(t => t.BaseType == typeof(Panel)).Select(t => (Panel)Activator.CreateInstance(t))
 			//		.ToArray();
 			//foreach (var editor in _editors)
 			//	editor.IsRendered = false;
-			Contents = new List<IWindowContent> { UT, KT, ET };
+			Contents = new List<IWindowContent> { UT, ET, new Button("Show events",expandView)};
 			// FlipMinimized();
+
 		}
 		/*
 		private void FlipMinimized()
@@ -121,7 +125,7 @@ namespace KerbinClock
 		{
 			get
 			{ // ExpandWidth?
-				return new [] {GUILayout.Width(180), GUILayout.Height(60)};
+				return new [] {GUILayout.Width(200), GUILayout.Height(60)};
 				//return _minimized ? new[] { GUILayout.Width(80), GUILayout.Height(50) } : new[] { GUILayout.Width(180), GUILayout.ExpandHeight(true) };
 			}
 		}
@@ -134,11 +138,11 @@ namespace KerbinClock
 			double dHours = dUT / 60.0 / 60.0;
 
 			double dKYears = Math.Floor (dHours / 2556.5402) + 1;
-			double dKDays = Math.Floor ( dHours / 6.0) % 2556.5402;
-			double dKHours = Math.Floor ( dHours % 6.0);
+			double dKDays = Math.Floor (dHours % 2556.5402 / 6.0) + 1; // Kerbin year is 2556.5402 hours
+			double dKHours = Math.Floor (dHours % 6.0);
 
 			double dEYears = Math.Floor (dHours / 8766.1527121) + 1;
-			double dEDays = Math.Floor (dHours / 24.0) % 8766.1527121;
+			double dEDays = Math.Floor (dHours % 8766.1527121 / 24.0) + 1; // Earth year is 8766.1527121 hours
 			double dEHours = Math.Floor (dHours % 24.0);
 
 			//int iKYears = Convert.ToInt32 (Math.Floor (dHours / 2556.5402)) + 1;
@@ -154,12 +158,52 @@ namespace KerbinClock
 		
 		
 			UT.Text = "UT: " + Math.Floor (dUT).ToString ("0,0");
-			KT.Text = "KT: Year " + dKYears.ToString ("0") + ", Day " + dKDays.ToString ("0") + ", " + 
-				dKHours.ToString ("00") + ":" + dMinutes.ToString ("00") + ":" + dSeconds.ToString ("00");
+			//KT.Text = "KT: Year " + dKYears.ToString ("0") + ", Day " + dKDays.ToString ("0") + ", " + 
+			//	dKHours.ToString ("00") + ":" + dMinutes.ToString ("00") + ":" + dSeconds.ToString ("00");
 			ET.Text = "ET: Year " + dEYears.ToString ("0") + ", Day " + dEDays.ToString ("0") + ", " + 
 				dEHours.ToString ("00") + ":" + dMinutes.ToString ("00") + ":" + dSeconds.ToString ("00");
 
+
+			// We should update the times anyway so we know when to launch popup notifications..
+			// There are 6 events in the list. Should I create a for loop? Jesus this would be easy in python..
+			// Okay hang on I think I got this
+			TextEvents.Text = "";
+			List<string> temp = new List<string>();
+
+			foreach (CelestialEvents.CelestialEvent CEvent in CEventList) // Loop through List with foreach
+			{
+				temp.Add (CEvent.ToString (dUT));
+			}
+			TextEvents.Text = string.Join ("\n",temp.ToArray ());
+
 		}
+		private void expandView ()
+		{
+			if (expanded) {
+				expanded = false;
+				Contents = new List<IWindowContent> { UT, ET, new Button("Show events",expandView) };
+
+			} 
+			else {
+				expanded = true;
+
+				// First we update the events
+				CEventList = CEvents.getEvents (Planetarium.GetUniversalTime());
+
+				// Then we update the clocks
+				ClockUpdate ();
+				//CelestialEvents events = new CelestialEvents();
+				//List<CelestialEvents.CelestialEvent> SortedEvents = events.getNextEvent (Planetarium.GetUniversalTime());
+
+
+				//string firsteventWhen = Math.Floor (SortedEvents[0].When).ToString ("0,0");
+				//string firsteventWhat = SortedEvents[0].What;
+				//Label firstevent = new Label(firsteventWhen + ": " + firsteventWhat);
+
+				Contents = new List<IWindowContent> { UT, ET, TextEvents, new Button("Hide events",expandView) };
+			}
+		}
+
 		public void OnFixedUpdate ()
 		{ 
 
